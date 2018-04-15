@@ -44,7 +44,7 @@ namespace Sourced
                 IEnumerable<IRequest<TId, TData>> requests;
 
                 try { requests = await asyncRequest.Requests; }
-                catch (OperationCanceledException) { return; }
+                catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token) { return; }
 
                 await ProcessRequestBatchAsync(state, requests);
             }
@@ -77,7 +77,7 @@ namespace Sourced
             IReadOnlyDictionary<TId, TData> results;
 
             try { results = await _source.ReadAsync(query, state.Token); }
-            catch (OperationCanceledException) { return; }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token) { return; }
 
             var data = new DataSet<TId, TData>(this, results);
             await RequestStageAsync(state.Handle(data), data);

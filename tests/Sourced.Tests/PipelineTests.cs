@@ -73,16 +73,17 @@ namespace Sourced.Tests
         [Fact]
         public async Task OperationCanceledException_Is_Handled_For_Sources_And_No_Results_Are_Returned()
         {
+            var cancellationSource = new CancellationTokenSource();
             var completionSource = new TaskCompletionSource<IReadOnlyDictionary<int, int>>();
             var source = new BlockingSource<int, int>(completionSource);
 
             var pipeline = new Pipeline<int, int>(source);
-            var resultsTask = pipeline.GetAsync(new[] { 1, 2 });
+            var resultsTask = pipeline.GetAsync(new[] { 1, 2 }, cancellationSource.Token);
 
             await Assert.ThrowsAsync<TimeoutException>(
                 () => resultsTask.TimeoutAfter(TimeSpan.FromMilliseconds(100)));
 
-            completionSource.SetCanceled();
+            completionSource.TrySetCanceled(cancellationSource.Token);
 
             Assert.Empty(await resultsTask);
         }
@@ -102,7 +103,6 @@ namespace Sourced.Tests
                 () => resultsTask.TimeoutAfter(TimeSpan.FromMilliseconds(100)));
 
             cancellationSource.Cancel();
-            source.SetResult(new Dictionary<int, int> { { 1, 2 }, { 3, 4 } });
 
             Assert.Equal(data, await resultsTask);
         }
@@ -110,18 +110,12 @@ namespace Sourced.Tests
         [Fact]
         public async Task OperationCanceledException_Is_Handled_For_Stages()
         {
-            async Task<IEnumerable<IRequest<int, int>>> WaitForCancel(CancellationToken token)
-            {
-                await token;
-                token.ThrowIfCancellationRequested();
-                return null;
-            }
-
+            var completionSource = new TaskCompletionSource<IEnumerable<IRequest<int, int>>>();
             var source = new FunctionBasedSource<int, int>();
             var stage = new Mock<IStage<int, int>>();
 
             stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Pipeline, WaitForCancel(t)) });
+                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Pipeline, completionSource.Task) });
 
             var cancellationSource = new CancellationTokenSource();
             var pipeline = new Pipeline<int, int>(source, stage.Object);
@@ -131,8 +125,50 @@ namespace Sourced.Tests
                 () => resultsTask.TimeoutAfter(TimeSpan.FromMilliseconds(100)));
 
             cancellationSource.Cancel();
+            completionSource.TrySetCanceled(cancellationSource.Token);
 
             Assert.Empty(await resultsTask);
+        }
+
+        [Fact]
+        public async Task OperationCanceledException_Isnt_Handled_When_Token_Doesnt_Match_For_Sources()
+        {
+            var cancellationSource = new CancellationTokenSource();
+            var completionSource = new TaskCompletionSource<IReadOnlyDictionary<int, int>>();
+            var source = new BlockingSource<int, int>(completionSource);
+
+            var pipeline = new Pipeline<int, int>(source);
+            var resultsTask = pipeline.GetAsync(new[] { 1, 2 });
+
+            await Assert.ThrowsAsync<TimeoutException>(
+                () => resultsTask.TimeoutAfter(TimeSpan.FromMilliseconds(100)));
+
+            completionSource.TrySetCanceled(cancellationSource.Token);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resultsTask);
+        }
+
+        [Fact]
+        public async Task OperationCanceledException_Isnt_Handled_When_Token_Doesnt_Match_For_Stages()
+        {
+            var completionSource = new TaskCompletionSource<IEnumerable<IRequest<int, int>>>();
+            var source = new FunctionBasedSource<int, int>();
+            var stage = new Mock<IStage<int, int>>();
+
+            stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Pipeline, completionSource.Task) });
+
+            var cancellationSource = new CancellationTokenSource();
+            var pipeline = new Pipeline<int, int>(source, stage.Object);
+            var resultsTask = pipeline.GetAsync(new[] { 1, 2 });
+
+            await Assert.ThrowsAsync<TimeoutException>(
+                () => resultsTask.TimeoutAfter(TimeSpan.FromMilliseconds(100)));
+
+            cancellationSource.Cancel();
+            completionSource.TrySetCanceled(cancellationSource.Token);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resultsTask);
         }
     }
 }
