@@ -110,8 +110,12 @@ namespace Sourced.Tests
         [Fact]
         public async Task OperationCanceledException_Is_Handled_For_Stages()
         {
-            async Task<IRequest<int, int>> WaitForCancel(CancellationToken token)
-            { await token; token.ThrowIfCancellationRequested(); return null; }
+            async Task<IEnumerable<IRequest<int, int>>> WaitForCancel(CancellationToken token)
+            {
+                await token;
+                token.ThrowIfCancellationRequested();
+                return null;
+            }
 
             var source = new FunctionBasedSource<int, int>();
             var stage = new Mock<IStage<int, int>>();

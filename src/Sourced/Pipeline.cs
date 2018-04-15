@@ -34,12 +34,19 @@ namespace Sourced
             return state.GetResults();
         }
 
-        private async Task ProcessResultAsync(State<TId, TData> state, IRequest<TId, TData> request)
+        private Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
+            => Task.WhenAll(requests.Select(r => ProcessRequestAsync(state, r)));
+
+        private async Task ProcessRequestAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
             if (request is Async<TId, TData> asyncRequest)
             {
-                try { request = await asyncRequest.Request; }
+                IEnumerable<IRequest<TId, TData>> requests;
+
+                try { requests = await asyncRequest.Requests; }
                 catch (OperationCanceledException) { return; }
+
+                await ProcessRequestBatchAsync(state, requests);
             }
 
             await RequestStageAsync(state.Handle(request), request);
@@ -62,9 +69,8 @@ namespace Sourced
 
             var stage = _stages[state.Index];
             var requests = stage.Process(request, state.Token);
-            var processed = requests.Select(r => ProcessResultAsync(state, r));
 
-            return Task.WhenAll(processed);
+            return ProcessRequestBatchAsync(state, requests);
         }
         private async Task QuerySourceAsync(State<TId, TData> state, Query<TId, TData> query)
         {

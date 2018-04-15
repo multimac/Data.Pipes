@@ -35,9 +35,9 @@ namespace Sourced
     /// </summary>
     /// <remarks>
     /// When this type of <see cref="IRequest{TId, TData}"/> is returned from a <see cref="IStage{TId, TData}"/>,
-    /// it indicates to the pipeline that another <see cref="IRequest{TId, TData}"/> will be
+    /// it indicates to the pipeline that a series of <see cref="IRequest{TId, TData}"/> will be
     /// returned at some point in the future, and that the pipeline should wait on the contained
-    /// <see cref="Task{TResult}"/> for the request. This type of <see cref="IRequest{TId, TData}"/>
+    /// <see cref="Task{TResult}"/> for the requests. This type of <see cref="IRequest{TId, TData}"/>
     /// will never be passed into a <see cref="IStage{TId, TData}"/>.
     /// </remarks>
     public class Async<TId, TData> : IRequest<TId, TData>
@@ -46,19 +46,19 @@ namespace Sourced
         public IPipeline<TId, TData> Pipeline { get; }
 
         /// <summary>
-        /// A <see cref="Task{TResult}"/> returning the actual request at some point in the future.
+        /// A <see cref="Task{TResult}"/> returning the actual requests at some point in the future.
         /// </summary>
-        public Task<IRequest<TId, TData>> Request { get; }
+        public Task<IEnumerable<IRequest<TId, TData>>> Requests { get; }
 
         /// <summary>
         /// Constructs a <see cref="Async{TId, TData}"/>.
         /// </summary>
         /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
-        /// <param name="request">The <see cref="Task{TResult}"/> returning the actual request.</param>
-        public Async(IPipeline<TId, TData> pipeline, Task<IRequest<TId, TData>> request)
+        /// <param name="request">The <see cref="Task{TResult}"/> returning the actual requests.</param>
+        public Async(IPipeline<TId, TData> pipeline, Task<IEnumerable<IRequest<TId, TData>>> requests)
         {
             Pipeline = pipeline;
-            Request = request;
+            Requests = requests;
         }
     }
 
