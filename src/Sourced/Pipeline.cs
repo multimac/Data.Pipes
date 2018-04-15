@@ -38,7 +38,8 @@ namespace Sourced
         {
             if (request is Async<TId, TData> asyncRequest)
             {
-                request = await asyncRequest.Request;
+                try { request = await asyncRequest.Request; }
+                catch (OperationCanceledException) { return; }
             }
 
             await RequestStageAsync(state.Handle(request), request);
@@ -67,9 +68,12 @@ namespace Sourced
         }
         private async Task QuerySourceAsync(State<TId, TData> state, Query<TId, TData> query)
         {
-            var results = await _source.ReadAsync(query, state.Token);
-            var data = new DataSet<TId, TData>(this, results);
+            IReadOnlyDictionary<TId, TData> results;
 
+            try { results = await _source.ReadAsync(query, state.Token); }
+            catch (OperationCanceledException) { return; }
+
+            var data = new DataSet<TId, TData>(this, results);
             await RequestStageAsync(state.Handle(data), data);
         }
     }
