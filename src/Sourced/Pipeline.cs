@@ -29,7 +29,18 @@ namespace Sourced
             var state = new State<TId, TData>(machine, token);
             var query = new Query<TId, TData>(this, ids);
 
-            await RequestStageAsync(state, query);
+            try
+            {
+                await RequestStageAsync(state, query);
+            }
+            catch (AggregateException ex)
+            {
+                throw new PipelineException<TId, TData>(state.GetResults(), ex.Flatten().InnerExceptions);
+            }
+            catch (Exception ex)
+            {
+                throw new PipelineException<TId, TData>(state.GetResults(), ex);
+            }
 
             return state.GetResults();
         }

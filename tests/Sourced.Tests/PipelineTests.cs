@@ -145,7 +145,10 @@ namespace Sourced.Tests
 
             completionSource.TrySetCanceled(cancellationSource.Token);
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resultsTask);
+            var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => resultsTask);
+
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
         }
 
         [Fact]
@@ -168,7 +171,10 @@ namespace Sourced.Tests
             cancellationSource.Cancel();
             completionSource.TrySetCanceled(cancellationSource.Token);
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resultsTask);
+            var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => resultsTask);
+
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
         }
     }
 }
