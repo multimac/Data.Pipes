@@ -14,9 +14,7 @@ namespace Sourced.Tests.Stages
         private readonly Dictionary<TId, TData> _data;
 
         public StaticDataStage() : this(new Dictionary<TId, TData>()) { }
-        public StaticDataStage(StageExceptionHandling handling) : this(new Dictionary<TId, TData>(), handling) { }
-        public StaticDataStage(IEnumerable<KeyValuePair<TId, TData>> data) : this(data, StageExceptionHandling.Default) { }
-        public StaticDataStage(IEnumerable<KeyValuePair<TId, TData>> data, StageExceptionHandling handling) : base(handling)
+        public StaticDataStage(IEnumerable<KeyValuePair<TId, TData>> data)
         {
             _data = data.ToDictionary(pair => pair.Key, pair => pair.Value);
             RegisterRequestHandler<Query<TId, TData>>(Process);
