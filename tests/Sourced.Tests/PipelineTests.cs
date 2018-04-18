@@ -176,5 +176,32 @@ namespace Sourced.Tests
             Assert.Collection(exception.InnerExceptions,
                 ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
         }
+
+        [Fact]
+        public async Task Exceptions_Are_Handled_When_Thrown_While_Producing_Requests_From_A_Stage()
+        {
+            var data = new Dictionary<int, int> { { 2, 3 }, { 3, 4 } };
+            var keys = data.Keys.Concat(new[] { 1, 4, 5 }).ToArray();
+            var stageException = new InvalidOperationException();
+
+            var source = new StaticDataSource<int, int>(data);
+            var stage = new Mock<IStage<int, int>>();
+
+            IEnumerable<IRequest<int, int>> Process(Query<int, int> request, CancellationToken token)
+            {
+                yield return new Query<int, int>(request.Pipeline, request.Ids.Take(request.Ids.Count / 2).ToArray());
+                throw stageException;
+            }
+
+            stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<Query<int, int>, CancellationToken>(Process);
+
+            var pipeline = new Pipeline<int, int>(source, stage.Object);
+            var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(keys));
+
+            Assert.Equal(data, exception.Results);
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.Equal(stageException, ex));
+        }
     }
 }

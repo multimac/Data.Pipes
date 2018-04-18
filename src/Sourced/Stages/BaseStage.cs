@@ -14,7 +14,10 @@ namespace Sourced.Stages
 
         private Dictionary<Type, RequestHandler> _handlers;
 
-        protected BaseStage() { _handlers = new Dictionary<Type, RequestHandler>(); }
+        protected BaseStage()
+        {
+            _handlers = new Dictionary<Type, RequestHandler>();
+        }
 
         protected void RegisterRequestHandler<T>(RequestHandler<T> handler) where T : IRequest<TId, TData>
         {

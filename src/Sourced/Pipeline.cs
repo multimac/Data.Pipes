@@ -31,7 +31,7 @@ namespace Sourced
 
             try
             {
-                await RequestStageAsync(state, query);
+                await Task.Run(() => RequestStageAsync(state, query));
             }
             catch (AggregateException ex)
             {
