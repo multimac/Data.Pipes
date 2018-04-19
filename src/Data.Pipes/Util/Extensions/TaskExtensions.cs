@@ -7,7 +7,7 @@ using Data.Pipes.StateMachine;
 
 namespace Data.Pipes.Util.Extensions
 {
-    public static class TaskExtensions
+    internal static class TaskExtensions
     {
         public static async Task TimeoutAfter(this Task task, TimeSpan timeout)
         {

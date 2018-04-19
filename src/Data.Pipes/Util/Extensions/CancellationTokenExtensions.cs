@@ -8,7 +8,7 @@ using Data.Pipes.StateMachine;
 
 namespace Data.Pipes.Util.Extensions
 {
-    public static class CancellationTokenExtensions
+    internal static class CancellationTokenExtensions
     {
         public static CancellationTokenAwaiter GetAwaiter(this CancellationToken cancellationToken)
         {
