@@ -182,6 +182,9 @@ namespace Sourced.Tests
         {
             var data = new Dictionary<int, int> { { 2, 3 }, { 3, 4 } };
             var keys = data.Keys.Concat(new[] { 1, 4, 5 }).ToArray();
+
+            var completionSource = new TaskCompletionSource<IEnumerable<IRequest<int, int>>>();
+            var completionException = new ArgumentException();
             var stageException = new InvalidOperationException();
 
             var source = new StaticDataSource<int, int>(data);
@@ -189,10 +192,12 @@ namespace Sourced.Tests
 
             IEnumerable<IRequest<int, int>> Process(Query<int, int> request, CancellationToken token)
             {
+                yield return new Async<int, int>(request.Pipeline, completionSource.Task);
                 yield return new Query<int, int>(request.Pipeline, request.Ids.Take(request.Ids.Count / 2).ToArray());
                 throw stageException;
             }
 
+            completionSource.SetException(completionException);
             stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
                 .Returns<Query<int, int>, CancellationToken>(Process);
 
@@ -200,8 +205,9 @@ namespace Sourced.Tests
             var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(keys));
 
             Assert.Equal(data, exception.Results);
-            Assert.Collection(exception.InnerExceptions,
-                ex => Assert.Equal(stageException, ex));
+            Assert.Equal(2, exception.InnerExceptions.Count);
+            Assert.Contains(completionException, exception.InnerExceptions);
+            Assert.Contains(stageException, exception.InnerExceptions);
         }
     }
 }

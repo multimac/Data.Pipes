@@ -45,8 +45,37 @@ namespace Sourced
             return state.GetResults();
         }
 
-        private Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
-            => Task.WhenAll(requests.Select(r => ProcessRequestAsync(state, r)));
+        private async Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
+        {
+            var collected = new List<IRequest<TId, TData>>();
+            var exceptions = new List<Exception>();
+
+            try
+            {
+                foreach (var request in requests)
+                    collected.Add(request);
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+
+            var processed = collected.Select(request => ProcessRequestAsync(state, request));
+
+            try
+            {
+                await Task.WhenAll(processed);
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+
+            if (exceptions.Any())
+            {
+                throw new AggregateException(exceptions);
+            }
+        }
 
         private async Task ProcessRequestAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
@@ -54,8 +83,14 @@ namespace Sourced
             {
                 IEnumerable<IRequest<TId, TData>> requests;
 
-                try { requests = await asyncRequest.Requests; }
-                catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token) { return; }
+                try
+                {
+                    requests = await asyncRequest.Requests;
+                }
+                catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token)
+                {
+                    return;
+                }
 
                 await ProcessRequestBatchAsync(state, requests);
             }
@@ -87,8 +122,14 @@ namespace Sourced
         {
             IReadOnlyDictionary<TId, TData> results;
 
-            try { results = await _source.ReadAsync(query, state.Token); }
-            catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token) { return; }
+            try
+            {
+                results = await _source.ReadAsync(query, state.Token);
+            }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token)
+            {
+                return;
+            }
 
             var data = new DataSet<TId, TData>(this, results);
             await RequestStageAsync(state.Handle(data), data);
