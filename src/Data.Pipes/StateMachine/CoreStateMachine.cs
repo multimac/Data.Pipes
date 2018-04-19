@@ -14,7 +14,7 @@ namespace Data.Pipes.StateMachine
             switch(request)
             {
                 default:
-                    throw new InvalidOperationException("Invalid type of {nameof(IRequest<TId, TData>)} ({request.GetType()}) given to state machine");
+                    throw new InvalidOperationException($"Invalid type of {nameof(IRequest<TId, TData>)} ({request.GetType()}) given to state machine");
 
                 case DataSet<TId, TData> data:
                     state.StateMachine = new CacheStateMachine<TId, TData>();
