@@ -36,7 +36,7 @@ namespace Data.Pipes
         /// <summary>
         /// The current <see cref="IStateMachine{TId, TData}"/> updating the state of the request.
         /// </summary>
-        public IStateMachine<TId, TData> StateMachine { get; set; }
+        public IStateMachine<TId, TData> StateMachine { private get; set; }
 
         internal State(IStateMachine<TId, TData> machine, CancellationToken token)
         {
