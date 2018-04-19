@@ -209,5 +209,27 @@ namespace Data.Pipes.Tests
             Assert.Contains(completionException, exception.InnerExceptions);
             Assert.Contains(stageException, exception.InnerExceptions);
         }
+
+        [Fact]
+        public async Task SourceRead_And_PipelineComplete_Flushes_Are_Sent_To_Stages()
+        {
+            var source = new StaticDataSource<int, int> { { 1, 1 }, { 2, 2 } };
+            var stage = new Mock<IStage<int, int>>();
+
+            stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { r });
+
+            var callOrder = 0;
+            stage.Setup(s => s.FlushAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask).Callback(() => Assert.Equal(0, callOrder++));
+            stage.Setup(s => s.FlushAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask).Callback(() => Assert.Equal(1, callOrder++));
+
+            await new Pipeline<int, int>(source, stage.Object)
+                .GetAsync(source.Keys.ToArray());
+
+            stage.Verify(s => s.FlushAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+            stage.Verify(s => s.FlushAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
     }
 }

@@ -29,5 +29,16 @@ namespace Data.Pipes
         /// </param>
         /// <returns>A series of further requests to be processed by the pipeline.</returns>
         IEnumerable<IRequest<TId, TData>> Process(IRequest<TId, TData> request, CancellationToken token);
+
+        /// <summary>
+        /// Processes a <see cref="IFlush{TId, TData}"/>.
+        /// </summary>
+        /// <param name="flush">The flush request to process.</param>
+        /// <param name="token">
+        /// A cancellation token used to cancel processing the flush. Partial results may be
+        /// returned if available.
+        /// </param>
+        /// <returns>A series of further requests to be processed by the pipeline.</returns>
+        Task FlushAsync(IFlush<TId, TData> flush, CancellationToken token);
     }
 }

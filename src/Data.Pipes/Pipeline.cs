@@ -49,11 +49,10 @@ namespace Data.Pipes
         {
             var machine = _config.InitialStateMachine;
             var state = new State<TId, TData>(machine, token);
-            var query = new Query<TId, TData>(this, ids);
 
             try
             {
-                await Task.Run(() => RequestStageAsync(state, query));
+                await Task.Run(() => ProcessPipelineAsync(state, ids));
             }
             catch (AggregateException ex)
             {
@@ -65,6 +64,11 @@ namespace Data.Pipes
             }
 
             return state.GetResults();
+        }
+        private async Task ProcessPipelineAsync(State<TId, TData> state, IReadOnlyCollection<TId> ids)
+        {
+            await RequestStageAsync(state, new Query<TId, TData>(this, ids));
+            await FlushStagesAsync(state, new PipelineComplete<TId, TData>(this));
         }
 
         private async Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
@@ -98,7 +102,6 @@ namespace Data.Pipes
                 throw new AggregateException(exceptions);
             }
         }
-
         private async Task ProcessRequestAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
             if (request is Async<TId, TData> asyncRequest)
@@ -119,6 +122,9 @@ namespace Data.Pipes
 
             await RequestStageAsync(state.Handle(request), request);
         }
+
+        private Task FlushStagesAsync(State<TId, TData> state, IFlush<TId, TData> flush)
+            => Task.WhenAll(_stages.Select(stage => stage.FlushAsync(flush, state.Token)));
 
         private Task RequestStageAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
@@ -154,7 +160,9 @@ namespace Data.Pipes
             }
 
             var data = new DataSet<TId, TData>(this, results);
-            await RequestStageAsync(state.Handle(data), data);
+            await Task.WhenAll(
+                FlushStagesAsync(state, new SourceRead<TId, TData>(this)),
+                RequestStageAsync(state.Handle(data), data));
         }
     }
 }
