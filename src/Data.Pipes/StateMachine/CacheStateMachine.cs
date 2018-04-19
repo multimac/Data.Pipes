@@ -7,8 +7,13 @@ using System.Threading.Tasks;
 
 namespace Data.Pipes.StateMachine
 {
+    /// <summary>
+    /// The <see cref="IStateMachine{TId, TData}"/> used to handle propagating
+    /// <see cref="DataSet{TId, TData}"/> requests back through a pipeline.
+    /// </summary>
     internal class CacheStateMachine<TId, TData> : IStateMachine<TId, TData>
     {
+        /// <inheritdoc/>
         public State<TId, TData> Handle(State<TId, TData> state, IRequest<TId, TData> request)
         {
             switch(request)

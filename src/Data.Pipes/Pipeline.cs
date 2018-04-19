@@ -7,6 +7,11 @@ using Data.Pipes.StateMachine;
 
 namespace Data.Pipes
 {
+    /// <summary>
+    /// Represents a pipeline of stages and, ultimately, a source of data. Each
+    /// <see cref="IStage{TId, TData}"/> within the pipeline has the ability to alter, drop, or
+    /// duplicate requests for data.
+    /// </summary>
     public class Pipeline<TId, TData> : IPipeline<TId, TData>
     {
         private readonly PipelineConfig<TId, TData> _config;
@@ -14,11 +19,24 @@ namespace Data.Pipes
         private readonly ISource<TId, TData> _source;
         private readonly IStage<TId, TData>[] _stages;
 
+        /// <inheritdoc/>
         public PipelineMetadata Metadata => PipelineMetadata
             .CreateFromSource<TId, TData>(_source);
 
+        /// <summary>
+        /// Constructs a <see cref="Pipeline{TId, TData}"/>.
+        /// </summary>
+        /// <param name="source">The source at the end of the pipeline.</param>
+        /// <param name="stages">A series of stages for requests to pass through.</param>
         public Pipeline(ISource<TId, TData> source, params IStage<TId, TData>[] stages)
             : this(source, new PipelineConfig<TId, TData>(), stages) { }
+
+        /// <summary>
+        /// Constructs a <see cref="Pipeline{TId, TData}"/>.
+        /// </summary>
+        /// <param name="source">The source at the end of the pipeline.</param>
+        /// <param name="config">The configuration for the pipeline.</param>
+        /// <param name="stages">A series of stages for requests to pass through.</param>
         public Pipeline(ISource<TId, TData> source, PipelineConfig<TId, TData> config, params IStage<TId, TData>[] stages)
         {
             _config = config;
@@ -26,6 +44,7 @@ namespace Data.Pipes
             _stages = stages;
         }
 
+        /// <inheritdoc/>
         public async Task<IReadOnlyDictionary<TId, TData>> GetAsync(IReadOnlyCollection<TId> ids, CancellationToken token = default)
         {
             var machine = _config.InitialStateMachine;

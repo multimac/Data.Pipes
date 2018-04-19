@@ -7,7 +7,7 @@ namespace Data.Pipes
 {
     /// <summary>
     /// Represents a request to a <see cref="IStage{TId, TData}"/> or <see cref="ISource{TId, TData}"/>
-    /// to perform work as part of a <see cref="IPipeline"/>.
+    /// to perform work as part of a <see cref="IPipeline{TId, TData}"/>.
     /// </summary>
     public interface IRequest<TId, TData>
     {
@@ -54,7 +54,7 @@ namespace Data.Pipes
         /// Constructs a <see cref="Async{TId, TData}"/>.
         /// </summary>
         /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
-        /// <param name="request">The <see cref="Task{TResult}"/> returning the actual requests.</param>
+        /// <param name="requests">The <see cref="Task{TResult}"/> returning the actual requests.</param>
         public Async(IPipeline<TId, TData> pipeline, Task<IEnumerable<IRequest<TId, TData>>> requests)
         {
             Pipeline = pipeline;
@@ -116,7 +116,7 @@ namespace Data.Pipes
         /// Constructs a <see cref="Query{TId, TData}"/>.
         /// </summary>
         /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
-        /// <param name="results">The series of ids to be retrieved.</param>
+        /// <param name="ids">The series of ids to be retrieved.</param>
         public Query(IPipeline<TId, TData> pipeline, IReadOnlyCollection<TId> ids)
         {
             Pipeline = pipeline;
@@ -146,7 +146,7 @@ namespace Data.Pipes
         /// Constructs a <see cref="Retry{TId, TData}"/>.
         /// </summary>
         /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
-        /// <param name="results">The series of ids to be retrieved.</param>
+        /// <param name="ids">The series of ids to be retrieved.</param>
         public Retry(IPipeline<TId, TData> pipeline, IReadOnlyCollection<TId> ids)
         {
             Pipeline = pipeline;

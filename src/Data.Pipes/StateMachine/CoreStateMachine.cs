@@ -7,8 +7,12 @@ using System.Threading.Tasks;
 
 namespace Data.Pipes.StateMachine
 {
+    /// <summary>
+    /// The default <see cref="IStateMachine{TId, TData}"/> for processing requests.
+    /// </summary>
     internal class CoreStateMachine<TId, TData> : IStateMachine<TId, TData>
     {
+        /// <inheritdoc/>
         public State<TId, TData> Handle(State<TId, TData> state, IRequest<TId, TData> request)
         {
             switch(request)
