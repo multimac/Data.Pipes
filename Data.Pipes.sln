@@ -5,11 +5,11 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{470B8295-FECC-4A24-9AAC-52B0BBF8BFCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sourced", "src\Sourced\Sourced.csproj", "{A4A7C414-46FA-4945-B5CD-55881019AB82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data.Pipes", "src\Data.Pipes\Data.Pipes.csproj", "{A4A7C414-46FA-4945-B5CD-55881019AB82}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DE1FEE80-0B7D-442E-9676-25EF9B2B66BB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sourced", "tests\Sourced.Tests\Sourced.Tests.csproj", "{4E5C54D3-4D7D-4602-85FC-AA4BE24CC6D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data.Pipes", "tests\Data.Pipes.Tests\Data.Pipes.Tests.csproj", "{4E5C54D3-4D7D-4602-85FC-AA4BE24CC6D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sourced.Stages
+namespace Data.Pipes.Stages
 {
     public abstract class BaseStage<TId, TData> : IStage<TId, TData>
     {

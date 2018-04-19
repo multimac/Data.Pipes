@@ -4,9 +4,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Sourced.StateMachine;
+using Data.Pipes.StateMachine;
 
-namespace Sourced.Util.Extensions
+namespace Data.Pipes.Util.Extensions
 {
     public static class CancellationTokenExtensions
     {

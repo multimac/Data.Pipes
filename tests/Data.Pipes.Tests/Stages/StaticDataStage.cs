@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Sourced.Stages;
+using Data.Pipes.Stages;
 using Xunit;
 
-namespace Sourced.Tests.Stages
+namespace Data.Pipes.Tests.Stages
 {
     public class StaticDataStage<TId, TData> : BaseStage<TId, TData>, IEnumerable
     {

@@ -9,7 +9,7 @@
             "type": "process",
 
             "command": "dotnet",
-            "args": [ "build", "${workspaceFolder}/Sourced.sln" ],
+            "args": [ "build", "${workspaceFolder}/Data.Pipes.sln" ],
             "problemMatcher": "$msCompile"
         }
     ]

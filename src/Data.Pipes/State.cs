@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Sourced.StateMachine;
+using Data.Pipes.StateMachine;
 
-namespace Sourced
+namespace Data.Pipes
 {
     internal struct State<TId, TData>
     {

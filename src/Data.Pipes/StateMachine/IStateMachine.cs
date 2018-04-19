@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sourced.StateMachine
+namespace Data.Pipes.StateMachine
 {
     internal interface IStateMachine<TId, TData>
     {

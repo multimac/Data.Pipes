@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Sourced.Tests.Stages
+namespace Data.Pipes.Tests.Stages
 {
     public class FunctionBasedSource<TId, TData> : ISource<TId, TData>
     {

@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Sourced.Tests.Stages
+namespace Data.Pipes.Tests.Stages
 {
     public class StaticDataSource<TId, TData> : ISource<TId, TData>, IEnumerable
     {

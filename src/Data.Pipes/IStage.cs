@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sourced
+namespace Data.Pipes
 {
     /// <summary>
     /// A stage in a <see cref="IPipeline{TId, TData}"/> which can be used to alter queries passing

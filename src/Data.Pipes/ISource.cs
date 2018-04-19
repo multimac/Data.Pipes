@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sourced
+namespace Data.Pipes
 {
     /// <summary>
     /// A source of data for a <see cref="IPipeline{TId, TData}"/>.

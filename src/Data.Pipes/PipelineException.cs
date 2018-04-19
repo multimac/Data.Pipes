@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Sourced.StateMachine;
+using Data.Pipes.StateMachine;
 
-namespace Sourced
+namespace Data.Pipes
 {
     /// <summary>
     /// Represents a series of exceptions which occurred while processing a request in the

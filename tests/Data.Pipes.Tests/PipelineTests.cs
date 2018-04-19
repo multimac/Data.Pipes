@@ -5,11 +5,11 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using Sourced.Tests.Stages;
-using Sourced.Util.Extensions;
+using Data.Pipes.Tests.Stages;
+using Data.Pipes.Util.Extensions;
 using Xunit;
 
-namespace Sourced.Tests
+namespace Data.Pipes.Tests
 {
     public class PipelineTests
     {

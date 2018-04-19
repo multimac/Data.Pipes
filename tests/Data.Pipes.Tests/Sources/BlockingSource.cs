@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Sourced.Util.Extensions;
+using Data.Pipes.Util.Extensions;
 using Xunit;
 
-namespace Sourced.Tests.Stages
+namespace Data.Pipes.Tests.Stages
 {
     public class BlockingSource<TId, TData> : ISource<TId, TData>
     {
