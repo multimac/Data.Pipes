@@ -9,23 +9,26 @@ namespace Data.Pipes
 {
     public class Pipeline<TId, TData> : IPipeline<TId, TData>
     {
+        private readonly PipelineConfig<TId, TData> _config;
+
         private readonly ISource<TId, TData> _source;
         private readonly IStage<TId, TData>[] _stages;
 
         public PipelineMetadata Metadata => PipelineMetadata
             .CreateFromSource<TId, TData>(_source);
 
-        public Pipeline(ISource<TId, TData> source, IEnumerable<IStage<TId, TData>> stages)
-            : this(source, stages.ToArray()) { }
         public Pipeline(ISource<TId, TData> source, params IStage<TId, TData>[] stages)
+            : this(source, new PipelineConfig<TId, TData>(), stages) { }
+        public Pipeline(ISource<TId, TData> source, PipelineConfig<TId, TData> config, params IStage<TId, TData>[] stages)
         {
+            _config = config;
             _source = source;
             _stages = stages;
         }
 
         public async Task<IReadOnlyDictionary<TId, TData>> GetAsync(IReadOnlyCollection<TId> ids, CancellationToken token = default)
         {
-            var machine = new CoreStateMachine<TId, TData>();
+            var machine = _config.InitialStateMachine;
             var state = new State<TId, TData>(machine, token);
             var query = new Query<TId, TData>(this, ids);
 

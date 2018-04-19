@@ -8,7 +8,7 @@ using Data.Pipes.StateMachine;
 
 namespace Data.Pipes
 {
-    internal struct State<TId, TData>
+    public struct State<TId, TData>
     {
         public int Counter { get; set; }
         public int Index { get; set; }
@@ -17,7 +17,7 @@ namespace Data.Pipes
         public ConcurrentBag<IReadOnlyDictionary<TId, TData>> Results { get; }
         public IStateMachine<TId, TData> StateMachine { get; set; }
 
-        public State(IStateMachine<TId, TData> machine, CancellationToken token)
+        internal State(IStateMachine<TId, TData> machine, CancellationToken token)
         {
             Counter = Index = 0;
             Token = token;
@@ -26,7 +26,7 @@ namespace Data.Pipes
             StateMachine = machine;
         }
 
-        public State<TId, TData> Handle(IRequest<TId, TData> request)
+        internal State<TId, TData> Handle(IRequest<TId, TData> request)
             => StateMachine.Handle(this, request);
 
         public IReadOnlyDictionary<TId, TData> GetResults() => Results
