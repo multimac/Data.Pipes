@@ -69,7 +69,7 @@ namespace Data.Pipes
         private async Task ProcessPipelineAsync(State<TId, TData> state, IReadOnlyCollection<TId> ids)
         {
             await RequestStageAsync(state, new Query<TId, TData>(state.Metadata, ids));
-            await FlushStagesAsync(state, new PipelineComplete<TId, TData>(state.Metadata));
+            await SignalStagesAsync(state, new PipelineComplete<TId, TData>(state.Metadata));
         }
 
         private async Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
@@ -124,8 +124,8 @@ namespace Data.Pipes
             await RequestStageAsync(state.Handle(request), request);
         }
 
-        private Task FlushStagesAsync(State<TId, TData> state, IFlush<TId, TData> flush)
-            => Task.WhenAll(_stages.Select(stage => stage.FlushAsync(flush, state.Token)));
+        private Task SignalStagesAsync(State<TId, TData> state, ISignal<TId, TData> signal)
+            => Task.WhenAll(_stages.Select(stage => stage.SignalAsync(signal, state.Token)));
 
         private Task RequestStageAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
@@ -162,7 +162,7 @@ namespace Data.Pipes
 
             var data = new DataSet<TId, TData>(state.Metadata, results);
             await Task.WhenAll(
-                FlushStagesAsync(state, new SourceRead<TId, TData>(state.Metadata)),
+                SignalStagesAsync(state, new SourceRead<TId, TData>(state.Metadata)),
                 RequestStageAsync(state.Handle(data), data));
         }
     }

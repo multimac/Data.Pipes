@@ -28,18 +28,18 @@ namespace Data.Pipes.Stages
 
         /// <summary>
         /// Represents a delegate method which can handle the given type of
-        /// <see cref="IFlush{TId, TData}"/> received by the stage.
+        /// <see cref="ISignal{TId, TData}"/> received by the stage.
         /// </summary>
-        /// <param name="flush">The flush request received by the stage.</param>
+        /// <param name="signal">The signal request received by the stage.</param>
         /// <param name="token">
         /// A <see cref="CancellationToken"/> to cancel the processing of the
-        /// <see cref="IFlush{TId, TData}"/>.
+        /// <see cref="ISignal{TId, TData}"/>.
         /// </param>
-        protected delegate Task FlushHandler<T>(T flush, CancellationToken token) where T : IFlush<TId, TData>;
-        private delegate Task FlushHandler(IFlush<TId, TData> flush, CancellationToken token);
+        protected delegate Task SignalHandler<T>(T signal, CancellationToken token) where T : ISignal<TId, TData>;
+        private delegate Task SignalHandler(ISignal<TId, TData> signal, CancellationToken token);
 
         private Dictionary<Type, RequestHandler> _handlers;
-        private Dictionary<Type, FlushHandler> _flushes;
+        private Dictionary<Type, SignalHandler> _signals;
 
         /// <summary>
         /// Constructs a <see cref="BaseStage{TId, TData}"/>.
@@ -47,7 +47,7 @@ namespace Data.Pipes.Stages
         protected BaseStage()
         {
             _handlers = new Dictionary<Type, RequestHandler>();
-            _flushes = new Dictionary<Type, FlushHandler>();
+            _signals = new Dictionary<Type, SignalHandler>();
         }
 
         /// <summary>
@@ -71,9 +71,9 @@ namespace Data.Pipes.Stages
         /// is received.
         /// </param>
         /// <typeparam>The type of request the given delegate method will handle.</typeparam>
-        protected void RegisterFlushHandler<T>(FlushHandler<T> handler) where T : IFlush<TId, TData>
+        protected void RegisterSignalHandler<T>(SignalHandler<T> handler) where T : ISignal<TId, TData>
         {
-            _flushes.Add(typeof(T), (r, t) => handler((T)r, t));
+            _signals.Add(typeof(T), (r, t) => handler((T)r, t));
         }
 
         /// <inheritdoc/>
@@ -86,12 +86,12 @@ namespace Data.Pipes.Stages
         }
 
         /// <inheritdoc/>
-        public Task FlushAsync(IFlush<TId, TData> flush, CancellationToken token)
+        public Task SignalAsync(ISignal<TId, TData> signal, CancellationToken token)
         {
-            if (!_flushes.TryGetValue(flush.GetType(), out var handler))
+            if (!_signals.TryGetValue(signal.GetType(), out var handler))
                 return Task.CompletedTask;
 
-            return handler(flush, token);
+            return handler(signal, token);
         }
     }
 }

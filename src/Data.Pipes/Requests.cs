@@ -75,13 +75,13 @@ namespace Data.Pipes
 
 #endregion
 
-#region Flushes
+#region Signals
 
     /// <summary>
-    /// A flush sent when a call to <see cref="IPipeline{TId, TData}.GetAsync(IReadOnlyCollection{TId}, CancellationToken)"/>
+    /// A signal sent when a call to <see cref="IPipeline{TId, TData}.GetAsync(IReadOnlyCollection{TId}, CancellationToken)"/>
     /// is about to complete.
     /// </summary>
-    public class PipelineComplete<TId, TData> : IFlush<TId, TData>
+    public class PipelineComplete<TId, TData> : ISignal<TId, TData>
     {
         /// <inheritdoc/>
         public RequestMetadata Metadata { get; }
@@ -97,10 +97,10 @@ namespace Data.Pipes
     }
 
     /// <summary>
-    /// A flush sent when data has been read from the <see cref="ISource{TId, TData}"/> in a
+    /// A signal sent when data has been read from the <see cref="ISource{TId, TData}"/> in a
     /// <see cref="IPipeline{TId, TData}"/>.
     /// </summary>
-    public class SourceRead<TId, TData> : IFlush<TId, TData>
+    public class SourceRead<TId, TData> : ISignal<TId, TData>
     {
         /// <inheritdoc/>
         public RequestMetadata Metadata { get; }

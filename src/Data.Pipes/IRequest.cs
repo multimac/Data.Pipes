@@ -45,12 +45,6 @@ namespace Data.Pipes
     }
 
     /// <summary>
-    /// A specific kind of <see cref="IRequest{TId, TData}"/> which is immediately sent to all
-    /// stages in a pipeline.
-    /// </summary>
-    public interface IFlush<TId, TData> : IRequest<TId, TData> { }
-
-    /// <summary>
     /// A specific kind of <see cref="IRequest{TId, TData}"/> to retrieve a series of ids from a 
     /// <see cref="IStage{TId, TData}"/> or <see cref="ISource{TId, TData}"/>.
     /// </summary>
@@ -61,4 +55,10 @@ namespace Data.Pipes
         /// </summary>
         IReadOnlyCollection<TId> Ids { get; }
     }
+
+    /// <summary>
+    /// A specific kind of <see cref="IRequest{TId, TData}"/> which is immediately sent to all
+    /// stages in a pipeline to signal some kind of event.
+    /// </summary>
+    public interface ISignal<TId, TData> : IRequest<TId, TData> { }
 }

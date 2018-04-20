@@ -211,7 +211,7 @@ namespace Data.Pipes.Tests
         }
 
         [Fact]
-        public async Task SourceRead_And_PipelineComplete_Flushes_Are_Sent_To_Stages()
+        public async Task SourceRead_And_PipelineComplete_Signals_Are_Sent_To_Stages()
         {
             var source = new StaticDataSource<int, int> { { 1, 1 }, { 2, 2 } };
             var stage = new Mock<IStage<int, int>>();
@@ -220,16 +220,16 @@ namespace Data.Pipes.Tests
                 .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { r });
 
             var callOrder = 0;
-            stage.Setup(s => s.FlushAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()))
+            stage.Setup(s => s.SignalAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask).Callback(() => Assert.Equal(0, callOrder++));
-            stage.Setup(s => s.FlushAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()))
+            stage.Setup(s => s.SignalAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask).Callback(() => Assert.Equal(1, callOrder++));
 
             await new Pipeline<int, int>(source, stage.Object)
                 .GetAsync(source.Keys.ToArray());
 
-            stage.Verify(s => s.FlushAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
-            stage.Verify(s => s.FlushAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+            stage.Verify(s => s.SignalAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+            stage.Verify(s => s.SignalAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

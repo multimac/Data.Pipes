@@ -31,14 +31,13 @@ namespace Data.Pipes
         IEnumerable<IRequest<TId, TData>> Process(IRequest<TId, TData> request, CancellationToken token);
 
         /// <summary>
-        /// Processes a <see cref="IFlush{TId, TData}"/>.
+        /// Processes a <see cref="ISignal{TId, TData}"/>.
         /// </summary>
-        /// <param name="flush">The flush request to process.</param>
+        /// <param name="signal">The signal request to process.</param>
         /// <param name="token">
-        /// A cancellation token used to cancel processing the flush. Partial results may be
+        /// A cancellation token used to cancel processing the signal. Partial results may be
         /// returned if available.
         /// </param>
-        /// <returns>A series of further requests to be processed by the pipeline.</returns>
-        Task FlushAsync(IFlush<TId, TData> flush, CancellationToken token);
+        Task SignalAsync(ISignal<TId, TData> signal, CancellationToken token);
     }
 }
