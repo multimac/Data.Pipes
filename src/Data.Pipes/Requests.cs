@@ -21,7 +21,7 @@ namespace Data.Pipes
     public class Async<TId, TData> : IRequest<TId, TData>
     {
         /// <inheritdoc/>
-        public IPipeline<TId, TData> Pipeline { get; }
+        public RequestMetadata Metadata { get; }
 
         /// <summary>
         /// A <see cref="Task{TResult}"/> returning the actual requests at some point in the future.
@@ -31,11 +31,11 @@ namespace Data.Pipes
         /// <summary>
         /// Constructs a <see cref="Async{TId, TData}"/>.
         /// </summary>
-        /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
+        /// <param name="metadata">Metadata about the request and the pipeline it's a part of.</param>
         /// <param name="requests">The <see cref="Task{TResult}"/> returning the actual requests.</param>
-        public Async(IPipeline<TId, TData> pipeline, Task<IEnumerable<IRequest<TId, TData>>> requests)
+        public Async(RequestMetadata metadata, Task<IEnumerable<IRequest<TId, TData>>> requests)
         {
-            Pipeline = pipeline;
+            Metadata = metadata;
             Requests = requests;
         }
     }
@@ -54,7 +54,7 @@ namespace Data.Pipes
     public class DataSet<TId, TData> : IRequest<TId, TData>
     {
         /// <inheritdoc/>
-        public IPipeline<TId, TData> Pipeline { get; }
+        public RequestMetadata Metadata { get; }
 
         /// <summary>
         /// The dictionary of ids and their corresponding data objects.
@@ -64,11 +64,11 @@ namespace Data.Pipes
         /// <summary>
         /// Constructs a <see cref="DataSet{TId, TData}"/>.
         /// </summary>
-        /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
+        /// <param name="metadata">Metadata about the request and the pipeline it's a part of.</param>
         /// <param name="results">The results contained in this <see cref="DataSet{TId, TData}"/>.</param>
-        public DataSet(IPipeline<TId, TData> pipeline, IReadOnlyDictionary<TId, TData> results)
+        public DataSet(RequestMetadata metadata, IReadOnlyDictionary<TId, TData> results)
         {
-            Pipeline = pipeline;
+            Metadata = metadata;
             Results = results;
         }
     }
@@ -84,15 +84,15 @@ namespace Data.Pipes
     public class PipelineComplete<TId, TData> : IFlush<TId, TData>
     {
         /// <inheritdoc/>
-        public IPipeline<TId, TData> Pipeline { get; }
+        public RequestMetadata Metadata { get; }
 
         /// <summary>
         /// Constructs a <see cref="PipelineComplete{TId, TData}"/>.
         /// </summary>
-        /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
-        internal PipelineComplete(IPipeline<TId, TData> pipeline)
+        /// <param name="metadata">Metadata about the request and the pipeline it's a part of.</param>
+        internal PipelineComplete(RequestMetadata metadata)
         {
-            Pipeline = pipeline;
+            Metadata = metadata;
         }
     }
 
@@ -103,15 +103,15 @@ namespace Data.Pipes
     public class SourceRead<TId, TData> : IFlush<TId, TData>
     {
         /// <inheritdoc/>
-        public IPipeline<TId, TData> Pipeline { get; }
+        public RequestMetadata Metadata { get; }
 
         /// <summary>
         /// Constructs a <see cref="SourceRead{TId, TData}"/>.
         /// </summary>
-        /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
-        internal SourceRead(IPipeline<TId, TData> pipeline)
+        /// <param name="metadata">Metadata about the request and the pipeline it's a part of.</param>
+        internal SourceRead(RequestMetadata metadata)
         {
-            Pipeline = pipeline;
+            Metadata = metadata;
         }
     }
 
@@ -131,7 +131,7 @@ namespace Data.Pipes
     public class Query<TId, TData> : IQuery<TId, TData>
     {
         /// <inheritdoc/>
-        public IPipeline<TId, TData> Pipeline { get; }
+        public RequestMetadata Metadata { get; }
 
         /// <inheritdoc/>
         public IReadOnlyCollection<TId> Ids { get; }
@@ -139,11 +139,11 @@ namespace Data.Pipes
         /// <summary>
         /// Constructs a <see cref="Query{TId, TData}"/>.
         /// </summary>
-        /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
+        /// <param name="metadata">Metadata about the request and the pipeline it's a part of.</param>
         /// <param name="ids">The series of ids to be retrieved.</param>
-        public Query(IPipeline<TId, TData> pipeline, IReadOnlyCollection<TId> ids)
+        public Query(RequestMetadata metadata, IReadOnlyCollection<TId> ids)
         {
-            Pipeline = pipeline;
+            Metadata = metadata;
             Ids = ids;
         }
     }
@@ -161,7 +161,7 @@ namespace Data.Pipes
     public class Retry<TId, TData> : IQuery<TId, TData>
     {
         /// <inheritdoc/>
-        public IPipeline<TId, TData> Pipeline { get; }
+        public RequestMetadata Metadata { get; }
 
         /// <inheritdoc/>
         public IReadOnlyCollection<TId> Ids { get; }
@@ -169,11 +169,11 @@ namespace Data.Pipes
         /// <summary>
         /// Constructs a <see cref="Retry{TId, TData}"/>.
         /// </summary>
-        /// <param name="pipeline">The <see cref="IPipeline{TId, TData}"/> this request is for.</param>
+        /// <param name="metadata">Metadata about the request and the pipeline it's a part of.</param>
         /// <param name="ids">The series of ids to be retrieved.</param>
-        public Retry(IPipeline<TId, TData> pipeline, IReadOnlyCollection<TId> ids)
+        public Retry(RequestMetadata metadata, IReadOnlyCollection<TId> ids)
         {
-            Pipeline = pipeline;
+            Metadata = metadata;
             Ids = ids;
         }
     }

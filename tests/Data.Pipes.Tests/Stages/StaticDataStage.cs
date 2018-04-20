@@ -26,8 +26,8 @@ namespace Data.Pipes.Tests.Stages
         {
             var results = query.Ids.Where(_data.ContainsKey).ToDictionary(id => id, id => _data[id]);
 
-            yield return new DataSet<TId, TData>(query.Pipeline, results);
-            yield return new Query<TId, TData>(query.Pipeline, query.Ids.Except(results.Keys).ToArray());
+            yield return new DataSet<TId, TData>(query.Metadata, results);
+            yield return new Query<TId, TData>(query.Metadata, query.Ids.Except(results.Keys).ToArray());
         }
 
         public IEnumerator GetEnumerator() => _data.GetEnumerator();

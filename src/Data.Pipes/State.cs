@@ -38,13 +38,19 @@ namespace Data.Pipes
         /// </summary>
         public IStateMachine<TId, TData> StateMachine { private get; set; }
 
-        internal State(IStateMachine<TId, TData> machine, CancellationToken token)
+        /// <summary>
+        /// Metadata about the request.
+        /// </summary>
+        public RequestMetadata Metadata { get; }
+
+        internal State(IStateMachine<TId, TData> machine, RequestMetadata metadata, CancellationToken token)
         {
             Counter = Index = 0;
             Token = token;
 
             Results = new ConcurrentBag<IReadOnlyDictionary<TId, TData>>();
             StateMachine = machine;
+            Metadata = metadata;
         }
 
         internal State<TId, TData> Handle(IRequest<TId, TData> request)

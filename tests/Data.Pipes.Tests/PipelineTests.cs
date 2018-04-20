@@ -49,7 +49,7 @@ namespace Data.Pipes.Tests
             var stage = new Mock<IStage<int, int>>();
 
             stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Retry<int, int>(r.Pipeline, r.Ids) });
+                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Retry<int, int>(r.Metadata, r.Ids) });
 
             var pipeline = new Pipeline<int, int>(source, stage.Object);
             var results = await pipeline.GetAsync(new[] { 1, 2 });
@@ -115,7 +115,7 @@ namespace Data.Pipes.Tests
             var stage = new Mock<IStage<int, int>>();
 
             stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Pipeline, completionSource.Task) });
+                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Metadata, completionSource.Task) });
 
             var cancellationSource = new CancellationTokenSource();
             var pipeline = new Pipeline<int, int>(source, stage.Object);
@@ -159,7 +159,7 @@ namespace Data.Pipes.Tests
             var stage = new Mock<IStage<int, int>>();
 
             stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Pipeline, completionSource.Task) });
+                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Metadata, completionSource.Task) });
 
             var cancellationSource = new CancellationTokenSource();
             var pipeline = new Pipeline<int, int>(source, stage.Object);
@@ -192,8 +192,8 @@ namespace Data.Pipes.Tests
 
             IEnumerable<IRequest<int, int>> Process(Query<int, int> request, CancellationToken token)
             {
-                yield return new Async<int, int>(request.Pipeline, completionSource.Task);
-                yield return new Query<int, int>(request.Pipeline, request.Ids.Take(request.Ids.Count / 2).ToArray());
+                yield return new Async<int, int>(request.Metadata, completionSource.Task);
+                yield return new Query<int, int>(request.Metadata, request.Ids.Take(request.Ids.Count / 2).ToArray());
                 throw stageException;
             }
 

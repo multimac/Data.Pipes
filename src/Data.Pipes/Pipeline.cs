@@ -48,7 +48,8 @@ namespace Data.Pipes
         public async Task<IReadOnlyDictionary<TId, TData>> GetAsync(IReadOnlyCollection<TId> ids, CancellationToken token = default)
         {
             var machine = _config.InitialStateMachine;
-            var state = new State<TId, TData>(machine, token);
+            var metadata = new RequestMetadata(Metadata);
+            var state = new State<TId, TData>(machine, metadata, token);
 
             try
             {
@@ -67,8 +68,8 @@ namespace Data.Pipes
         }
         private async Task ProcessPipelineAsync(State<TId, TData> state, IReadOnlyCollection<TId> ids)
         {
-            await RequestStageAsync(state, new Query<TId, TData>(this, ids));
-            await FlushStagesAsync(state, new PipelineComplete<TId, TData>(this));
+            await RequestStageAsync(state, new Query<TId, TData>(state.Metadata, ids));
+            await FlushStagesAsync(state, new PipelineComplete<TId, TData>(state.Metadata));
         }
 
         private async Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
@@ -159,9 +160,9 @@ namespace Data.Pipes
                 return;
             }
 
-            var data = new DataSet<TId, TData>(this, results);
+            var data = new DataSet<TId, TData>(state.Metadata, results);
             await Task.WhenAll(
-                FlushStagesAsync(state, new SourceRead<TId, TData>(this)),
+                FlushStagesAsync(state, new SourceRead<TId, TData>(state.Metadata)),
                 RequestStageAsync(state.Handle(data), data));
         }
     }

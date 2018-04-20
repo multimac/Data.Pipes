@@ -6,15 +6,42 @@ using System.Threading.Tasks;
 namespace Data.Pipes
 {
     /// <summary>
+    /// Metadata about a <see cref="IRequest{TId, TData}"/>.
+    /// </summary>
+    public class RequestMetadata
+    {
+        /// <summary>
+        /// An identifier for the current series of requests.
+        /// </summary>
+        Guid Identifier { get; }
+
+        /// <summary>
+        /// Metadata about the pipeline the requests are a part of.
+        /// </summary>
+        PipelineMetadata Pipeline { get; }
+
+        /// <summary>
+        /// Constructs a <see cref="RequestMetadata"/>.
+        /// </summary>
+        /// <param name="pipelineMetadata">
+        /// Metadata about the <see cref="IPipeline{TId, TData}"/> the requests are a part of.
+        /// </param>
+        internal RequestMetadata(PipelineMetadata pipelineMetadata)
+        {
+            Pipeline = pipelineMetadata;
+        }
+    }
+
+    /// <summary>
     /// Represents a request to a <see cref="IStage{TId, TData}"/> or <see cref="ISource{TId, TData}"/>
     /// to perform work as part of a <see cref="IPipeline{TId, TData}"/>.
     /// </summary>
     public interface IRequest<TId, TData>
     {
         /// <summary>
-        /// The <see cref="IPipeline{TId, TData}"/> this request is for.
+        /// Metadata about the request and the pipeline it's a part of.
         /// </summary>
-        IPipeline<TId, TData> Pipeline { get; }
+        RequestMetadata Metadata { get; }
     }
 
     /// <summary>
