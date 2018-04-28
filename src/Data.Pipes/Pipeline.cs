@@ -82,6 +82,7 @@ namespace Data.Pipes
                 foreach (var request in requests)
                     collected.Add(request);
             }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token) { }
             catch (Exception ex)
             {
                 exceptions.Add(ex);
@@ -143,7 +144,16 @@ namespace Data.Pipes
             }
 
             var stage = _stages[state.Index];
-            var requests = stage.Process(request, state.Token);
+            IEnumerable<IRequest<TId, TData>> requests;
+
+            try
+            {
+                requests = stage.Process(request, state.Token);
+            }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token)
+            {
+                return Task.CompletedTask;
+            }
 
             return ProcessRequestBatchAsync(state, requests);
         }
