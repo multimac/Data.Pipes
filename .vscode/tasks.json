@@ -4,12 +4,29 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "group": "build",
             "label": "build",
-            "type": "process",
+            "group": { "kind": "build", "isDefault": true },
 
+            "type": "process",
             "command": "dotnet",
             "args": [ "build", "${workspaceFolder}/Data.Pipes.sln" ],
+
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "test w/coverage",
+            "group": "test",
+
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "test",
+                "/p:CollectCoverage=true",
+                "/p:CoverletOutputFormat=lcov",
+                "/p:CoverletOutput=./lcov",
+                "${workspaceFolder}/Data.Pipes.sln"
+            ],
+
             "problemMatcher": "$msCompile"
         }
     ]
