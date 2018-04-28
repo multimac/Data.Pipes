@@ -43,6 +43,37 @@ namespace Data.Pipes.Tests
         }
 
         [Fact]
+        public async Task Results_From_Stages_And_Source_Are_Combined()
+        {
+            var data = new Dictionary<int, int> { { 1, 4 }, { 2, 3 }, { 5, 9 } };
+            var stage = new StaticDataStage<int, int>(data.Where(pair => pair.Key % 2 != 0).ToDictionary(pair => pair.Key, pair => pair.Value));
+            var source = new StaticDataSource<int, int>(data.Where(pair => pair.Key % 2 == 0).ToDictionary(pair => pair.Key, pair => pair.Value));
+
+            var pipeline = new Pipeline<int, int>(source, stage);
+            var results = await pipeline.GetAsync(data.Keys);
+
+            Assert.Equal(data, results);
+        }
+
+        [Fact]
+        public async Task Async_Requests_Can_Be_Used_To_Delay_Return_Of_Requests()
+        {
+            var data = new Dictionary<int, int> { { 1, 1 }, { 6, 1 }, { 7, 9 } };
+            var source = new StaticDataSource<int, int>(data);
+            var stage = new Mock<IStage<int, int>>();
+
+            async Task<IEnumerable<IRequest<int, int>>> Process(IRequest<int, int> request) { await Task.Delay(1); return new[] { request }; }
+
+            stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Metadata, Process(r)) });
+
+            var pipeline = new Pipeline<int, int>(source, stage.Object);
+            var results = await pipeline.GetAsync(data.Keys);
+
+            Assert.Equal(data, results);
+        }
+
+        [Fact]
         public async Task Retries_Returned_From_First_Stage_Are_Ignored()
         {
             var source = new FunctionBasedSource<int, int>();
@@ -55,19 +86,6 @@ namespace Data.Pipes.Tests
             var results = await pipeline.GetAsync(new[] { 1, 2 });
 
             Assert.Empty(results);
-        }
-
-        [Fact]
-        public async Task Results_From_Stages_And_Source_Are_Combined()
-        {
-            var data = new Dictionary<int, int> { { 1, 4 }, { 2, 3 }, { 5, 9 } };
-            var stage = new StaticDataStage<int, int>(data.Where(pair => pair.Key % 2 != 0).ToDictionary(pair => pair.Key, pair => pair.Value));
-            var source = new StaticDataSource<int, int>(data.Where(pair => pair.Key % 2 == 0).ToDictionary(pair => pair.Key, pair => pair.Value));
-
-            var pipeline = new Pipeline<int, int>(source, stage);
-            var results = await pipeline.GetAsync(data.Keys);
-
-            Assert.Equal(data, results);
         }
 
         [Fact]

@@ -120,6 +120,7 @@ namespace Data.Pipes
                 }
 
                 await ProcessRequestBatchAsync(state, requests);
+                return;
             }
 
             await RequestStageAsync(state.Handle(request), request);
