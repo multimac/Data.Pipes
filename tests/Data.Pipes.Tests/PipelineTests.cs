@@ -294,5 +294,20 @@ namespace Data.Pipes.Tests
             Assert.Contains(completionException, exception.InnerExceptions);
             Assert.Contains(stageException, exception.InnerExceptions);
         }
+
+        [Fact]
+        public async Task Exceptions_Dont_Prevent_PipelineComplete_Signal_From_Being_Sent()
+        {
+            var source = new FunctionBasedSource<int, int>();
+            var stage = new Mock<IStage<int, int>>();
+
+            stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .Throws<Exception>();
+
+            var pipeline = new Pipeline<int, int>(source, stage.Object);
+            await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(new[] { 1 }));
+
+            stage.Verify(s => s.SignalAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
     }
 }

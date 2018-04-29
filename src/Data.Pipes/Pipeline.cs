@@ -68,8 +68,8 @@ namespace Data.Pipes
         }
         private async Task ProcessPipelineAsync(State<TId, TData> state, IReadOnlyCollection<TId> ids)
         {
-            await RequestStageAsync(state, new Query<TId, TData>(state.Metadata, ids));
-            await SignalStagesAsync(state, new PipelineComplete<TId, TData>(state.Metadata));
+            try { await RequestStageAsync(state, new Query<TId, TData>(state.Metadata, ids)); }
+            finally { await SignalStagesAsync(state, new PipelineComplete<TId, TData>(state.Metadata)); }
         }
 
         private async Task ProcessRequestBatchAsync(State<TId, TData> state, IEnumerable<IRequest<TId, TData>> requests)
@@ -106,7 +106,7 @@ namespace Data.Pipes
         }
         private async Task ProcessRequestAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
-            switch(request)
+            switch (request)
             {
                 default:
                     await RequestStageAsync(state.Handle(request), request);
