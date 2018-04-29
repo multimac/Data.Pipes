@@ -13,6 +13,11 @@ namespace Data.Pipes.Tests
 {
     public class PipelineTests
     {
+        public class CustomSignal<TId, TData> : ISignal<TId, TData>
+        {
+            public RequestMetadata Metadata => throw new NotImplementedException();
+        }
+
         [Fact]
         public async Task Can_Retrieve_Data_From_A_Source()
         {
@@ -108,6 +113,22 @@ namespace Data.Pipes.Tests
 
             stage.Verify(s => s.SignalAsync(It.IsAny<SourceRead<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
             stage.Verify(s => s.SignalAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task Custom_Signals_Can_Be_Sent_Between_Stages()
+        {
+            var source = new StaticDataSource<int, int> { { 1, 1 }, { 2, 2 } };
+            var stageOne = new Mock<IStage<int, int>>();
+            var stageTwo = new Mock<IStage<int, int>>();
+
+            stageOne.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns(new IRequest<int, int>[] { new CustomSignal<int, int>() });
+
+            await new Pipeline<int, int>(source, stageOne.Object, stageTwo.Object)
+                .GetAsync(source.Keys.ToArray());
+
+            stageTwo.Verify(s => s.SignalAsync(It.IsAny<CustomSignal<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 

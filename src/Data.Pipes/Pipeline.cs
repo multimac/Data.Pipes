@@ -106,24 +106,31 @@ namespace Data.Pipes
         }
         private async Task ProcessRequestAsync(State<TId, TData> state, IRequest<TId, TData> request)
         {
-            if (request is Async<TId, TData> asyncRequest)
+            switch(request)
             {
-                IEnumerable<IRequest<TId, TData>> requests;
-
-                try
-                {
-                    requests = await asyncRequest.Requests;
-                }
-                catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token)
-                {
+                default:
+                    await RequestStageAsync(state.Handle(request), request);
                     return;
-                }
 
-                await ProcessRequestBatchAsync(state, requests);
-                return;
+                case Async<TId, TData> asyncRequest:
+                    IEnumerable<IRequest<TId, TData>> requests;
+
+                    try
+                    {
+                        requests = await asyncRequest.Requests;
+                    }
+                    catch (OperationCanceledException ex) when (ex.CancellationToken == state.Token)
+                    {
+                        return;
+                    }
+
+                    await ProcessRequestBatchAsync(state, requests);
+                    return;
+
+                case ISignal<TId, TData> signalRequest:
+                    await SignalStagesAsync(state, signalRequest);
+                    return;
             }
-
-            await RequestStageAsync(state.Handle(request), request);
         }
 
         private Task SignalStagesAsync(State<TId, TData> state, ISignal<TId, TData> signal)
