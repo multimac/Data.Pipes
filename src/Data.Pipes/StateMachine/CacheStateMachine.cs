@@ -11,20 +11,19 @@ namespace Data.Pipes.StateMachine
     /// The <see cref="IStateMachine{TId, TData}"/> used to handle propagating
     /// <see cref="DataSet{TId, TData}"/> requests back through a pipeline.
     /// </summary>
-    internal class CacheStateMachine<TId, TData> : IStateMachine<TId, TData>
+    public class CacheStateMachine<TId, TData> : BaseStateMachine<TId, TData>
     {
-        /// <inheritdoc/>
-        public State<TId, TData> Handle(State<TId, TData> state, IRequest<TId, TData> request)
+        /// <summary>
+        /// Constructs a <see cref="CacheStateMachine{TId, TData}"/>.
+        /// </summary>
+        internal protected CacheStateMachine()
         {
-            switch(request)
-            {
-                default:
-                    throw new InvalidOperationException($"Invalid type of {nameof(IRequest<TId, TData>)} ({request.GetType()}) given to state machine");
+            RegisterRequestHandler<DataSet<TId, TData>>(HandleDataSet);
+        }
 
-                case DataSet<TId, TData> data:
-                    state.Index--;
-                    break;
-            }
+        private State<TId, TData> HandleDataSet(State<TId, TData> state, DataSet<TId, TData> request)
+        {
+            state.Index--;
 
             return state;
         }

@@ -10,30 +10,37 @@ namespace Data.Pipes.StateMachine
     /// <summary>
     /// The default <see cref="IStateMachine{TId, TData}"/> for processing requests.
     /// </summary>
-    internal class CoreStateMachine<TId, TData> : IStateMachine<TId, TData>
+    public class CoreStateMachine<TId, TData> : BaseStateMachine<TId, TData>
     {
-        /// <inheritdoc/>
-        public State<TId, TData> Handle(State<TId, TData> state, IRequest<TId, TData> request)
+        /// <summary>
+        /// Constructs a <see cref="CoreStateMachine{TId, TData}"/>.
+        /// </summary>
+        internal protected CoreStateMachine()
         {
-            switch(request)
-            {
-                default:
-                    throw new InvalidOperationException($"Invalid type of {nameof(IRequest<TId, TData>)} ({request.GetType()}) given to state machine");
+            RegisterRequestHandler<DataSet<TId, TData>>(HandleDataSet);
+            RegisterRequestHandler<Query<TId, TData>>(HandleQuery);
+            RegisterRequestHandler<Retry<TId, TData>>(HandleRetry);
+        }
 
-                case DataSet<TId, TData> data:
-                    state.StateMachine = new CacheStateMachine<TId, TData>();
-                    state.Results.Add(data.Results);
-                    state.Index--;
-                    break;
+        private State<TId, TData> HandleDataSet(State<TId, TData> state, DataSet<TId, TData> request)
+        {
+            state.StateMachine = new CacheStateMachine<TId, TData>();
+            state.Results.Add(request.Results);
+            state.Index--;
 
-                case Query<TId, TData> query:
-                    state.Index++;
-                    break;
+            return state;
+        }
 
-                case Retry<TId, TData> retry:
-                    state.Index--;
-                    break;
-            }
+        private State<TId, TData> HandleQuery(State<TId, TData> state, Query<TId, TData> request)
+        {
+            state.Index++;
+
+            return state;
+        }
+
+        private State<TId, TData> HandleRetry(State<TId, TData> state, Retry<TId, TData> request)
+        {
+            state.Index--;
 
             return state;
         }
