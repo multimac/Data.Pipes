@@ -9,7 +9,8 @@ namespace Data.Pipes.Stages
 {
     /// <summary>
     /// An abstract base class for custom <see cref="IStage{TId, TData}"/> classes to use. Provides
-    /// some utility methods to register <see cref="IRequest{TId, TData}"/> handlers.
+    /// some utility methods to register <see cref="IRequest{TId, TData}"/> and <see cref="ISignal{TId, TData}"/>
+    /// handlers.
     /// </summary>
     public abstract class BaseStage<TId, TData> : IStage<TId, TData>
     {
@@ -38,8 +39,8 @@ namespace Data.Pipes.Stages
         protected delegate Task SignalHandler<T>(T signal, CancellationToken token) where T : ISignal<TId, TData>;
         private delegate Task SignalHandler(ISignal<TId, TData> signal, CancellationToken token);
 
-        private Dictionary<Type, RequestHandler> _handlers;
-        private Dictionary<Type, SignalHandler> _signals;
+        private readonly Dictionary<Type, RequestHandler> _handlers;
+        private readonly Dictionary<Type, SignalHandler> _signals;
 
         /// <summary>
         /// Constructs a <see cref="BaseStage{TId, TData}"/>.
