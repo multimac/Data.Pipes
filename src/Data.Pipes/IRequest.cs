@@ -28,6 +28,7 @@ namespace Data.Pipes
         /// </param>
         internal RequestMetadata(PipelineMetadata pipelineMetadata)
         {
+            Identifier = Guid.NewGuid();
             Pipeline = pipelineMetadata;
         }
     }
