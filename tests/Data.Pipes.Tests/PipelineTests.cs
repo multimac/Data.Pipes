@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
+using Data.Pipes.StateMachine;
 using Data.Pipes.Tests.Stages;
 using Data.Pipes.Util.Extensions;
 using Xunit;
@@ -293,6 +294,41 @@ namespace Data.Pipes.Tests
             Assert.Equal(2, exception.InnerExceptions.Count);
             Assert.Contains(completionException, exception.InnerExceptions);
             Assert.Contains(stageException, exception.InnerExceptions);
+        }
+
+        [Fact]
+        public async Task Exceptions_Are_Handled_From_Custom_State_Machines()
+        {
+            var source = new StaticDataSource<int, int> { { 1, 1 }, { 2, 2 } };
+            var machine = new Mock<IStateMachine<int, int>>();
+
+            machine.Setup(m => m.Handle(It.IsAny<State<int, int>>(), It.IsAny<IRequest<int, int>>()))
+                .Throws<NotImplementedException>();
+
+            var pipeline = new Pipeline<int, int>(source, new PipelineConfig<int, int> { InitialStateMachine = machine.Object });
+            var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(source.Keys.ToArray()));
+
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.IsType<NotImplementedException>(ex));
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(-2)]
+        public async Task InvalidOperationException_Is_Thrown_If_State_Has_Invalid_Index(int index)
+        {
+            var source = new StaticDataSource<int, int> { { 1, 1 }, { 2, 2 } };
+            var stage = new StaticDataStage<int, int>();
+            var machine = new Mock<IStateMachine<int, int>>();
+
+            machine.Setup(m => m.Handle(It.IsAny<State<int, int>>(), It.IsAny<IRequest<int, int>>()))
+                .Returns<State<int, int>, IRequest<int, int>>((s, t) => { s.Index = index; return s; });
+
+            var pipeline = new Pipeline<int, int>(source, new PipelineConfig<int, int> { InitialStateMachine = machine.Object }, stage);
+            var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(source.Keys.ToArray()));
+
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.IsType<InvalidOperationException>(ex));
         }
 
         [Fact]

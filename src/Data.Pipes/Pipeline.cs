@@ -140,7 +140,7 @@ namespace Data.Pipes
         {
             if (state.Index < -1 || state.Index > _stages.Length)
             {
-                throw new IndexOutOfRangeException("Pipeline state has transitioned out-of-bounds.");
+                throw new InvalidOperationException("Pipeline state has transitioned out-of-bounds.");
             }
             else if (state.Index == _stages.Length)
             {
@@ -181,7 +181,7 @@ namespace Data.Pipes
             var data = new DataSet<TId, TData>(state.Metadata, results);
             await Task.WhenAll(
                 SignalStagesAsync(state, new SourceRead<TId, TData>(state.Metadata)),
-                RequestStageAsync(state.Handle(data), data));
+                ProcessRequestAsync(state, data));
         }
     }
 }
