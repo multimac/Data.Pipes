@@ -39,14 +39,19 @@ namespace Data.Pipes
         /// <param name="stages">A series of stages for requests to pass through.</param>
         public Pipeline(ISource<TId, TData> source, PipelineConfig<TId, TData> config, params IStage<TId, TData>[] stages)
         {
-            _config = config;
-            _source = source;
-            _stages = stages;
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _source = source ?? throw new ArgumentNullException(nameof(source));
+            _stages = stages ?? throw new ArgumentNullException(nameof(stages));
+
+            if (_stages.Contains(null)) { throw new ArgumentNullException(nameof(stages)); }
         }
 
         /// <inheritdoc/>
         public async Task<IReadOnlyDictionary<TId, TData>> GetAsync(IReadOnlyCollection<TId> ids, CancellationToken token = default)
         {
+            if (ids is null) { throw new ArgumentNullException(nameof(ids)); }
+            if (ids.Any(id => id == null)) { throw new ArgumentNullException(nameof(ids)); }
+
             var machine = _config.InitialStateMachine;
             var metadata = new RequestMetadata(Metadata);
             var state = new State<TId, TData>(machine, metadata, token);

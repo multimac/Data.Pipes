@@ -16,7 +16,12 @@ namespace Data.Pipes
         /// The <see cref="IStateMachine{TId, TData}"/> to use when a request is first made to the
         /// pipeline.
         /// </summary>
-        public IStateMachine<TId, TData> InitialStateMachine { get; set; }
-            = new CoreStateMachine<TId, TData>();
+        public IStateMachine<TId, TData> InitialStateMachine
+        {
+            get => _initialStateMachine ?? DefaultInitialStateMachine;
+            set => _initialStateMachine = value;
+        }
+        private static readonly IStateMachine<TId, TData> DefaultInitialStateMachine = new CoreStateMachine<TId, TData>();
+        private IStateMachine<TId, TData> _initialStateMachine;
     }
 }

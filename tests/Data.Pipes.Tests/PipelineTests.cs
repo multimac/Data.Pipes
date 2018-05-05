@@ -135,113 +135,39 @@ namespace Data.Pipes.Tests
 
     public class PipelineExceptionHandlingTests
     {
-        private readonly Mock<IStage<int, int>> _stage;
-        private readonly Mock<ISource<int, int>> _source;
-
-        private readonly Pipeline<int, int> _pipeline;
-
-        public PipelineExceptionHandlingTests()
+        public static IEnumerable<object[]> GetPossibleConstructorCalls()
         {
-            _stage = new Mock<IStage<int, int>>();
-            _stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { r });
+            var config = new PipelineConfig<int, int>();
+            var source = new StaticDataSource<int, int>();
+            var stage = new StaticDataStage<int, int>();
 
-            _source = new Mock<ISource<int, int>>();
-            _source.Setup(s => s.ReadAsync(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Dictionary<int, int>());
-
-            _pipeline = new Pipeline<int, int>(_source.Object, _stage.Object);
-        }
-
-        public static IEnumerable<object[]> GetPossibleStageExceptions()
-        {
-            yield return new object[] { (Action<Mock<IStage<int, int>>, Action>)MockStageProcessCall };
-            yield return new object[] { (Action<Mock<IStage<int, int>>, Action>)MockStageProcessEnumeration };
-            yield return new object[] { (Action<Mock<IStage<int, int>>, Action>)MockAsyncRequest };
-        }
-
-        private static void MockStageProcessCall(Mock<IStage<int, int>> stage, Action action)
-        {
-            IEnumerable<IRequest<int, int>> Process() { action(); return new IRequest<int, int>[] { }; }
-
-            stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<IRequest<int, int>, CancellationToken>((r, t) => Process());
-        }
-
-        private static void MockStageProcessEnumeration(Mock<IStage<int, int>> stage, Action action)
-        {
-            IEnumerable<IRequest<int, int>> Process(Query<int, int> request) { yield return new Query<int, int>(request.Metadata, new int[] { }); action(); }
-
-            stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<Query<int, int>, CancellationToken>((r, t) => Process(r));
-        }
-
-        private static void MockAsyncRequest(Mock<IStage<int, int>> stage, Action action)
-        {
-            Task<IEnumerable<IRequest<int, int>>> Process() { action(); return Task.FromResult(Enumerable.Empty<IRequest<int, int>>()); }
-
-            stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Metadata, Task.Run(() => Process())) });
-        }
-
-        private static void MockSourceRead(Mock<ISource<int, int>> source, Action action)
-        {
-            Task<IReadOnlyDictionary<int, int>> Process() { action(); return Task.FromResult<IReadOnlyDictionary<int, int>>(new Dictionary<int, int> { }); }
-
-            source.Setup(s => s.ReadAsync(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.Run<IReadOnlyDictionary<int, int>>(() => Process()));
+            yield return new object[] { null, config, new IStage<int, int>[] { stage } };
+            yield return new object[] { source, null, new IStage<int, int>[] { stage } };
+            yield return new object[] { source, config, new IStage<int, int>[] { stage, null } };
+            yield return new object[] { source, config, null };
         }
 
         [Theory]
-        [MemberData(nameof(GetPossibleStageExceptions))]
-        public async Task Token_Matches_And_Thrown_From_Stage_Methods(Action<Mock<IStage<int, int>>, Action> mockSetup)
+        [MemberData(nameof(GetPossibleConstructorCalls))]
+        public void ArgumentNullException_Is_Thrown_For_Null_Constructor_Arguments(ISource<int, int> source, PipelineConfig<int, int> config, IStage<int, int>[] stages)
+            => Assert.Throws<ArgumentNullException>(() => new Pipeline<int, int>(source, config, stages));
+
+        [Fact]
+        public async Task ArgumentNullException_Is_Throw_For_Null_Passed_To_GetAsync()
         {
-            var cancellationSource = new CancellationTokenSource();
+            var source = new StaticDataSource<int, int>();
+            var pipeline = new Pipeline<int, int>(source);
 
-            mockSetup(_stage, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
-
-            var results = await _pipeline.GetAsync(new[] { 1, 2 }, cancellationSource.Token);
-
-            Assert.Empty(results);
-        }
-
-        [Theory]
-        [MemberData(nameof(GetPossibleStageExceptions))]
-        public async Task Token_Is_Different_And_Thrown_From_Stage_Methods(Action<Mock<IStage<int, int>>, Action> mockSetup)
-        {
-            var cancellationSource = new CancellationTokenSource();
-
-            mockSetup(_stage, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
-
-            var exception = await Assert.ThrowsAsync<PipelineException<int, int>>(() => _pipeline.GetAsync(new[] { 1, 2 }));
-
-            Assert.Collection(exception.InnerExceptions,
-                ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => pipeline.GetAsync(null));
         }
 
         [Fact]
-        public async Task Token_Matches_And_Thrown_From_Source()
+        public async Task ArgumentNullException_Is_Throw_For_Any_Null_Ids_Passed_To_GetAsync()
         {
-            var cancellationSource = new CancellationTokenSource();
+            var source = new StaticDataSource<int?, int>();
+            var pipeline = new Pipeline<int?, int>(source);
 
-            MockSourceRead(_source, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
-
-            var results = await _pipeline.GetAsync(new[] { 1, 2 }, cancellationSource.Token);
-
-            Assert.Empty(results);
-        }
-
-        [Fact]
-        public async Task Token_Is_Different_And_Thrown_From_Source()
-        {
-            var cancellationSource = new CancellationTokenSource();
-
-            MockSourceRead(_source, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
-
-            var exception = await Assert.ThrowsAsync<PipelineException<int, int>>(() => _pipeline.GetAsync(new[] { 1, 2 }));
-
-            Assert.Collection(exception.InnerExceptions,
-                ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => pipeline.GetAsync(new int?[] { 1, null }));
         }
 
         [Fact]
@@ -344,6 +270,118 @@ namespace Data.Pipes.Tests
             await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(new[] { 1 }));
 
             stage.Verify(s => s.SignalAsync(It.IsAny<PipelineComplete<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+    }
+
+    public class PipelineTokenExceptionHandlingTests
+    {
+        private readonly Mock<IStage<int, int>> _stage;
+        private readonly Mock<ISource<int, int>> _source;
+
+        private readonly Pipeline<int, int> _pipeline;
+
+        public PipelineTokenExceptionHandlingTests()
+        {
+            _stage = new Mock<IStage<int, int>>();
+            _stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { r });
+
+            _source = new Mock<ISource<int, int>>();
+            _source.Setup(s => s.ReadAsync(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<int, int>());
+
+            _pipeline = new Pipeline<int, int>(_source.Object, _stage.Object);
+        }
+
+        public static IEnumerable<object[]> GetPossibleStageExceptions()
+        {
+            yield return new object[] { (Action<Mock<IStage<int, int>>, Action>)MockStageProcessCall };
+            yield return new object[] { (Action<Mock<IStage<int, int>>, Action>)MockStageProcessEnumeration };
+            yield return new object[] { (Action<Mock<IStage<int, int>>, Action>)MockAsyncRequest };
+        }
+
+        private static void MockStageProcessCall(Mock<IStage<int, int>> stage, Action action)
+        {
+            IEnumerable<IRequest<int, int>> Process() { action(); return new IRequest<int, int>[] { }; }
+
+            stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<IRequest<int, int>, CancellationToken>((r, t) => Process());
+        }
+
+        private static void MockStageProcessEnumeration(Mock<IStage<int, int>> stage, Action action)
+        {
+            IEnumerable<IRequest<int, int>> Process(Query<int, int> request) { yield return new Query<int, int>(request.Metadata, new int[] { }); action(); }
+
+            stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<Query<int, int>, CancellationToken>((r, t) => Process(r));
+        }
+
+        private static void MockAsyncRequest(Mock<IStage<int, int>> stage, Action action)
+        {
+            Task<IEnumerable<IRequest<int, int>>> Process() { action(); return Task.FromResult(Enumerable.Empty<IRequest<int, int>>()); }
+
+            stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { new Async<int, int>(r.Metadata, Task.Run(() => Process())) });
+        }
+
+        private static void MockSourceRead(Mock<ISource<int, int>> source, Action action)
+        {
+            Task<IReadOnlyDictionary<int, int>> Process() { action(); return Task.FromResult<IReadOnlyDictionary<int, int>>(new Dictionary<int, int> { }); }
+
+            source.Setup(s => s.ReadAsync(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.Run<IReadOnlyDictionary<int, int>>(() => Process()));
+        }
+
+        [Theory]
+        [MemberData(nameof(GetPossibleStageExceptions))]
+        public async Task Token_Matches_And_Thrown_From_Stage_Methods(Action<Mock<IStage<int, int>>, Action> mockSetup)
+        {
+            var cancellationSource = new CancellationTokenSource();
+
+            mockSetup(_stage, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
+
+            var results = await _pipeline.GetAsync(new[] { 1, 2 }, cancellationSource.Token);
+
+            Assert.Empty(results);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetPossibleStageExceptions))]
+        public async Task Token_Is_Different_And_Thrown_From_Stage_Methods(Action<Mock<IStage<int, int>>, Action> mockSetup)
+        {
+            var cancellationSource = new CancellationTokenSource();
+
+            mockSetup(_stage, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
+
+            var exception = await Assert.ThrowsAsync<PipelineException<int, int>>(() => _pipeline.GetAsync(new[] { 1, 2 }));
+
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
+        }
+
+        [Fact]
+        public async Task Token_Matches_And_Thrown_From_Source()
+        {
+            var cancellationSource = new CancellationTokenSource();
+
+            MockSourceRead(_source, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
+
+            var results = await _pipeline.GetAsync(new[] { 1, 2 }, cancellationSource.Token);
+
+            Assert.Empty(results);
+        }
+
+        [Fact]
+        public async Task Token_Is_Different_And_Thrown_From_Source()
+        {
+            var cancellationSource = new CancellationTokenSource();
+
+            MockSourceRead(_source, () => { cancellationSource.Cancel(); cancellationSource.Token.ThrowIfCancellationRequested(); });
+
+            var exception = await Assert.ThrowsAsync<PipelineException<int, int>>(() => _pipeline.GetAsync(new[] { 1, 2 }));
+
+            Assert.Collection(exception.InnerExceptions,
+                ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
         }
     }
 }
