@@ -19,7 +19,7 @@ namespace Data.Pipes.Tests.Stages
         public void SetResult(IReadOnlyDictionary<TId, TData> data)
             => _source.SetResult(data);
 
-        public async Task<IReadOnlyDictionary<TId, TData>> ReadAsync(Query<TId, TData> query, CancellationToken token)
+        public async Task<IReadOnlyDictionary<TId, TData>> ReadAsync(IQuery<TId, TData> query, CancellationToken token)
         {
             var tokenTask = Task.Run(async () => await token);
             if (_source.Task == await Task.WhenAny(_source.Task, tokenTask))

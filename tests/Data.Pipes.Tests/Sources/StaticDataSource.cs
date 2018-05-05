@@ -24,7 +24,7 @@ namespace Data.Pipes.Tests.Stages
 
         public void Add(TId key, TData value) => _data.Add(key, value);
 
-        public Task<IReadOnlyDictionary<TId, TData>> ReadAsync(Query<TId, TData> query, CancellationToken token)
+        public Task<IReadOnlyDictionary<TId, TData>> ReadAsync(IQuery<TId, TData> query, CancellationToken token)
             => Task.FromResult<IReadOnlyDictionary<TId, TData>>(query.Ids.Where(_data.ContainsKey).ToDictionary(id => id, id => _data[id]));
 
         public IEnumerator GetEnumerator() => _data.GetEnumerator();

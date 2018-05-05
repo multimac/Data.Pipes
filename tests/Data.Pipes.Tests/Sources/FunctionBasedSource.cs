@@ -15,7 +15,7 @@ namespace Data.Pipes.Tests.Stages
         public FunctionBasedSource() : this(_ => throw new InvalidOperationException()) { }
         public FunctionBasedSource(Func<TId, TData> func) { _func = func; }
 
-        public Task<IReadOnlyDictionary<TId, TData>> ReadAsync(Query<TId, TData> query, CancellationToken token)
+        public Task<IReadOnlyDictionary<TId, TData>> ReadAsync(IQuery<TId, TData> query, CancellationToken token)
             => Task.FromResult<IReadOnlyDictionary<TId, TData>>(query.Ids.ToDictionary(id => id, id => _func(id)));
     }
 }

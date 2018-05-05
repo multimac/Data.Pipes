@@ -28,6 +28,6 @@ namespace Data.Pipes
         /// A <see cref="IReadOnlyDictionary{TId, TData}"/> containing data for all the ids which were able to
         /// be retrieved.
         /// </returns>
-        Task<IReadOnlyDictionary<TId, TData>> ReadAsync(Query<TId, TData> query, CancellationToken token);
+        Task<IReadOnlyDictionary<TId, TData>> ReadAsync(IQuery<TId, TData> query, CancellationToken token);
     }
 }

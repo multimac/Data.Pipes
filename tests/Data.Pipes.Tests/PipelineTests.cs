@@ -20,6 +20,25 @@ namespace Data.Pipes.Tests
             {
                 public RequestMetadata Metadata => throw new NotImplementedException();
             }
+            public class CustomQuery<TId, TData> : IQuery<TId, TData>
+            {
+                public RequestMetadata Metadata => throw new NotImplementedException();
+                public IReadOnlyCollection<TId> Ids => throw new NotImplementedException();
+            }
+            public class CustomStateMachine<TId, TData> : CoreStateMachine<TId, TData>
+            {
+                public CustomStateMachine()
+                {
+                    RegisterRequestHandler<CustomQuery<TId, TData>>(HandleCustomQuery);
+                }
+
+                private State<TId, TData> HandleCustomQuery(State<TId, TData> state, CustomQuery<TId, TData> request)
+                {
+                    state.Index++;
+
+                    return state;
+                }
+            }
 
             [Fact]
             public async Task Can_Retrieve_Data_From_A_Source()
@@ -133,6 +152,25 @@ namespace Data.Pipes.Tests
 
                 stageTwo.Verify(s => s.SignalAsync(It.IsAny<CustomSignal<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
             }
+
+            [Fact]
+            public async Task Custom_Query_Requests_Can_Be_Passed_To_Final_Stage()
+            {
+                var config = new PipelineConfig<int, int> { InitialStateMachine = new CustomStateMachine<int, int>() };
+                var source = new Mock<ISource<int, int>>();
+                var stage = new Mock<IStage<int, int>>();
+
+                source.Setup(s => s.ReadAsync(It.IsAny<IQuery<int, int>>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new Dictionary<int, int>());
+
+                stage.Setup(s => s.Process(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()))
+                    .Returns<Query<int, int>, CancellationToken>((r, t) => new[] { new CustomQuery<int, int>() });
+
+                await new Pipeline<int, int>(source.Object, config, stage.Object).GetAsync(new[] { 1, 2, 3 });
+
+                source.Verify(s => s.ReadAsync(It.IsAny<IQuery<int, int>>(), It.IsAny<CancellationToken>()), Times.Once);
+            }
+
         }
 
         public class CancellationHandling
@@ -217,8 +255,7 @@ namespace Data.Pipes.Tests
 
                 var exception = await Assert.ThrowsAsync<PipelineException<int, int>>(() => _pipeline.GetAsync(new[] { 1, 2 }));
 
-                Assert.Collection(exception.InnerExceptions,
-                    ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
+                Assert.Collection(exception.InnerExceptions, ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
             }
 
             [Fact]
@@ -242,8 +279,7 @@ namespace Data.Pipes.Tests
 
                 var exception = await Assert.ThrowsAsync<PipelineException<int, int>>(() => _pipeline.GetAsync(new[] { 1, 2 }));
 
-                Assert.Collection(exception.InnerExceptions,
-                    ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
+                Assert.Collection(exception.InnerExceptions, ex => Assert.IsAssignableFrom<OperationCanceledException>(ex));
             }
         }
 
@@ -348,8 +384,7 @@ namespace Data.Pipes.Tests
                 var pipeline = new Pipeline<int, int>(source, new PipelineConfig<int, int> { InitialStateMachine = machine.Object });
                 var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(source.Keys.ToArray()));
 
-                Assert.Collection(exception.InnerExceptions,
-                    ex => Assert.IsType<NotImplementedException>(ex));
+                Assert.Collection(exception.InnerExceptions, ex => Assert.IsType<NotImplementedException>(ex));
             }
 
             [Theory]
@@ -367,8 +402,27 @@ namespace Data.Pipes.Tests
                 var pipeline = new Pipeline<int, int>(source, new PipelineConfig<int, int> { InitialStateMachine = machine.Object }, stage);
                 var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(source.Keys.ToArray()));
 
-                Assert.Collection(exception.InnerExceptions,
-                    ex => Assert.IsType<InvalidOperationException>(ex));
+                Assert.Collection(exception.InnerExceptions, ex => Assert.IsType<InvalidOperationException>(ex));
+            }
+
+            [Fact]
+            public async Task InvalidOperationException_Is_Thrown_If_Non_Query_Request_Reaches_Source()
+            {
+                var source = new Mock<ISource<int, int>>();
+                var stage = new Mock<IStage<int, int>>();
+                var machine = new Mock<IStateMachine<int, int>>();
+
+                stage.Setup(s => s.Process(It.IsAny<IRequest<int, int>>(), It.IsAny<CancellationToken>()))
+                    .Returns<IRequest<int, int>, CancellationToken>((r, t) => new[] { new DataSet<int, int>(r.Metadata, new Dictionary<int, int>()) });
+
+                machine.Setup(m => m.Handle(It.IsAny<State<int, int>>(), It.IsAny<IRequest<int, int>>()))
+                    .Returns<State<int, int>, IRequest<int, int>>((s, r) => { s.Index++; return s; });
+
+                var pipeline = new Pipeline<int, int>(source.Object, new PipelineConfig<int, int> { InitialStateMachine = machine.Object }, stage.Object);
+                var exception = await Assert.ThrowsAnyAsync<PipelineException<int, int>>(() => pipeline.GetAsync(new[] { 1, 2, 3 }));
+
+                Assert.Collection(exception.InnerExceptions, ex => Assert.IsType<InvalidOperationException>(ex));
+                source.Verify(s => s.ReadAsync(It.IsAny<Query<int, int>>(), It.IsAny<CancellationToken>()), Times.Never);
             }
 
             [Fact]

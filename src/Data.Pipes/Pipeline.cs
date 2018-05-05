@@ -149,7 +149,10 @@ namespace Data.Pipes
             }
             else if (state.Index == _stages.Length)
             {
-                return QuerySourceAsync(state, request as Query<TId, TData>);
+                var query = request as IQuery<TId, TData>;
+
+                if (query == null) { throw new InvalidOperationException("Only query requests can be passed to the source."); }
+                return QuerySourceAsync(state, query);
             }
             else if (state.Index == -1)
             {
@@ -170,7 +173,7 @@ namespace Data.Pipes
 
             return ProcessRequestBatchAsync(state, requests);
         }
-        private async Task QuerySourceAsync(State<TId, TData> state, Query<TId, TData> query)
+        private async Task QuerySourceAsync(State<TId, TData> state, IQuery<TId, TData> query)
         {
             IReadOnlyDictionary<TId, TData> results;
 
